@@ -1,11 +1,18 @@
-const WEB_APP_URL = "YOUR_GOOGLE_SCRIPT_WEBAPP_URL_HERE";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwO7rRBaZT_PvPDNVd7HHyTvldn9n3abxFYikvJ_pHoILH27XDWO6hZb88HOH8Xw-Tr/exec";
 
 let currentUser = null;
 
-// ===== Utility: get formatted current time =====
-function getCurrentTime() {
-    const now = new Date();
-    return now.toLocaleString('en-US', { hour12: false });
+// ===== Utility Functions =====
+
+// Get current UTC time for storing in Google Sheet
+function getUTCISOTime() {
+    return new Date().toISOString(); // YYYY-MM-DDTHH:MM:SS.sssZ
+}
+
+// Format ISO time to local readable string
+function formatLocalTime(isoString) {
+    const d = new Date(isoString);
+    return d.toLocaleString('en-US', { hour12: false }); // YYYY-MM-DD HH:MM:SS
 }
 
 // ===== Login =====
@@ -27,47 +34,48 @@ async function login() {
     }
 }
 
-// ===== Update Attendance (Check-In / Check-Out) =====
+// ===== Attendance =====
 async function updateAttendance(type) {
-    const dateTime = getCurrentTime();
+    const dateISO = getUTCISOTime();
 
     // Fetch existing attendance
     const res = await fetch(WEB_APP_URL + "?sheet=Attendance");
     const data = await res.json();
 
-    const todayStr = new Date().toLocaleDateString();
-    let existingRow = data.find(r => r[0] === currentUser.id && new Date(r[1]).toLocaleDateString() === todayStr);
+    const todayStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    let existingRow = data.find(r => r[0] === currentUser.id && r[1].split("T")[0] === todayStr);
 
     if(existingRow){
-        // TODO: Apps Script update function needed
-        alert("Attendance already exists for today. Check-In/Check-Out might create duplicate until update function is added.");
+        // TODO: Apps Script update function can replace this row
+        alert("Attendance already exists for today. Row update will fix duplicate.");
     } else {
         // Add new row
-        const payload = [currentUser.id, dateTime, type==='in'?dateTime:"", type==='out'?dateTime:"", currentUser.name];
+        const payload = [currentUser.id, dateISO, type==='in'?dateISO:"", type==='out'?dateISO:"", currentUser.name];
         await fetch(WEB_APP_URL + "?sheet=Attendance", {
             method: "POST",
             body: JSON.stringify(payload)
         });
-        alert(`${type==='in' ? 'Check-In' : 'Check-Out'} recorded: ${dateTime}`);
+        alert(`${type==='in' ? 'Check-In' : 'Check-Out'} recorded: ${formatLocalTime(dateISO)}`);
     }
 }
 
 function checkIn(){ updateAttendance('in'); }
 function checkOut(){ updateAttendance('out'); }
 
-// ===== Update Task =====
+// ===== Task Update =====
 async function updateTask() {
     const taskTitle = document.getElementById("taskTitle").value.trim();
     const taskStatus = document.getElementById("taskStatus").value;
-    const dateTime = getCurrentTime();
+    const dateISO = getUTCISOTime();
 
     if(!taskTitle) { alert("Enter Task Title"); return; }
 
-    const payload = ["task_" + Date.now(), currentUser.id, taskTitle, taskStatus, dateTime, currentUser.name];
+    const payload = ["task_" + Date.now(), currentUser.id, taskTitle, taskStatus, dateISO, currentUser.name];
     await fetch(WEB_APP_URL + "?sheet=Tasks", {
         method: "POST",
         body: JSON.stringify(payload)
     });
-    alert("Task updated: " + taskTitle);
+
+    alert("Task updated: " + taskTitle + " at " + formatLocalTime(dateISO));
     document.getElementById("taskTitle").value = "";
 }
