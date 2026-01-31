@@ -1,37 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Remote Attendance</title>
+  <meta charset="UTF-8">
+  <title>Employee Dashboard</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>Remote Attendance System</h1>
-
   <!-- Login Section -->
-  <div id="loginArea">
-    <input type="text" id="userID" placeholder="Enter User ID">
-    <button onclick="login()">Login</button>
+  <div class="login-container" id="loginContainer">
+    <div class="login-card">
+      <h2>Employee Login</h2>
+      <input type="text" id="userId" placeholder="Enter User ID" required>
+      <button class="login-btn" onclick="login()">Login</button>
+    </div>
   </div>
 
-  <!-- Employee Area -->
-  <div id="employeeArea" style="display:none;">
-    <h2>Welcome, <span id="empName"></span></h2>
+  <!-- Employee Dashboard -->
+  <div class="dashboard hidden" id="dashboard">
+    <h2>Welcome, <span id="displayName"></span></h2>
 
-    <!-- Attendance -->
-    <div class="attendanceButtons">
-      <button onclick="checkIn()">Check In</button>
-      <button onclick="checkOut()">Check Out</button>
+    <!-- Attendance Section -->
+    <div class="attendance">
+      <h3>Attendance</h3>
+      <button onclick="checkIn()">Check-In</button>
+      <button onclick="checkOut()">Check-Out</button>
+      <div id="attendanceLog"></div>
     </div>
 
-    <!-- Task Update -->
-    <h3>Update Task</h3>
-    <input type="text" id="taskTitle" placeholder="Task Title">
-    <select id="taskStatus">
-      <option>Not Started</option>
-      <option>In Progress</option>
-      <option>Completed</option>
-    </select>
-    <button onclick="updateTask()">Update Task</button>
+    <!-- Tasks Section -->
+    <div class="tasks">
+      <h3>Tasks</h3>
+      <input type="text" id="taskTitle" placeholder="Task Title">
+      <select id="taskStatus">
+        <option>Not Started</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+      </select>
+      <button onclick="addTask()">Add/Update Task</button>
+      <div id="taskList"></div>
+    </div>
   </div>
 
   <script src="js/app.js"></script>
