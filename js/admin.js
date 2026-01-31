@@ -1,4 +1,4 @@
-const WEB_APP_URL = "YOUR_GOOGLE_SCRIPT_WEBAPP_URL_HERE";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwO7rRBaZT_PvPDNVd7HHyTvldn9n3abxFYikvJ_pHoILH27XDWO6hZb88HOH8Xw-Tr/exec";
 
 async function fetchData(sheetName) {
   const res = await fetch(WEB_APP_URL + "?sheet=" + sheetName);
@@ -8,7 +8,6 @@ async function fetchData(sheetName) {
 function getDateFilter(period) {
   const today = new Date();
   let startDate;
-
   if(period === "daily") {
     startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   } else if(period === "weekly") {
@@ -27,11 +26,10 @@ async function initDashboard() {
   const attendance = await fetchData("Attendance");
   const tasks = await fetchData("Tasks");
 
-  // Filter by period
   const filteredAttendance = attendance.filter(row => new Date(row[1]) >= startDate);
   const filteredTasks = tasks.filter(row => new Date(row[4]) >= startDate);
 
-  // Attendance Summary
+  // Attendance summary
   const attendanceMap = {};
   filteredAttendance.forEach(row => {
     const user = row[0];
@@ -55,7 +53,7 @@ async function initDashboard() {
     options: { responsive: true, scales: { y: { beginAtZero: true } } }
   });
 
-  // Task Summary
+  // Task summary
   const statusCount = { "Not Started": 0, "In Progress": 0, "Completed": 0 };
   filteredTasks.forEach(row => {
     const status = row[3];
@@ -75,21 +73,16 @@ async function initDashboard() {
   });
 }
 
-// Export CSV function
+// Export CSV
 async function exportToCSV() {
   const attendance = await fetchData("Attendance");
   const tasks = await fetchData("Tasks");
 
   let csvContent = "data:text/csv;charset=utf-8,";
   csvContent += "Attendance\nUserID,Date,CheckIn,CheckOut\n";
-  attendance.forEach(row => {
-    csvContent += row.join(",") + "\n";
-  });
-
+  attendance.forEach(row => { csvContent += row.join(",") + "\n"; });
   csvContent += "\nTasks\nTaskID,UserID,TaskTitle,Status,LastUpdated\n";
-  tasks.forEach(row => {
-    csvContent += row.join(",") + "\n";
-  });
+  tasks.forEach(row => { csvContent += row.join(",") + "\n"; });
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
