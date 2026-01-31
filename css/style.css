@@ -1,370 +1,458 @@
-// Google Apps Script Code - Deploy as Web App
-const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID'; // Replace with your Sheet ID
-
-function doGet(e) {
-  return handleRequest(e);
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-function doPost(e) {
-  return handleRequest(e);
+:root {
+    --primary-color: #4361ee;
+    --secondary-color: #3a0ca3;
+    --success-color: #4cc9f0;
+    --warning-color: #f72585;
+    --danger-color: #7209b7;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --gray-color: #6c757d;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
 }
 
-function handleRequest(e) {
-  const action = e.parameter.action;
-  
-  try {
-    let result;
-    
-    switch(action) {
-      case 'login':
-        result = handleLogin(e.parameter.userId);
-        break;
-      case 'checkIn':
-        result = handleCheckIn(e.parameter.userId, e.parameter.name);
-        break;
-      case 'checkOut':
-        result = handleCheckOut(e.parameter.userId);
-        break;
-      case 'getAttendance':
-        result = getEmployeeAttendance(e.parameter.userId, e.parameter.period);
-        break;
-      case 'getAllAttendance':
-        result = getAllAttendance(e.parameter.period);
-        break;
-      case 'addTask':
-        result = addTask(e.parameter.userId, e.parameter.name, e.parameter.taskTitle, e.parameter.status);
-        break;
-      case 'updateTask':
-        result = updateTask(e.parameter.taskId, e.parameter.status);
-        break;
-      case 'getTasks':
-        result = getEmployeeTasks(e.parameter.userId);
-        break;
-      case 'getAllTasks':
-        result = getAllTasks();
-        break;
-      case 'exportData':
-        result = exportData(e.parameter.dataType);
-        break;
-      default:
-        result = { success: false, message: 'Invalid action' };
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: var(--dark-color);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Login Page */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-box {
+    background: white;
+    padding: 40px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.login-box h1 {
+    margin-bottom: 30px;
+    color: var(--primary-color);
+    font-size: 2rem;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--gray-color);
+    font-weight: 500;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    transition: var(--transition);
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    text-align: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(67, 97, 238, 0.2);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-color), #2a9d8f);
+    color: white;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--warning-color), #e63946);
+    color: white;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger-color), #560bad);
+    color: white;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-block {
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+}
+
+/* Dashboard */
+.dashboard {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h2 {
+    font-size: 1.5rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-info span {
+    font-weight: 600;
+}
+
+/* Cards */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 30px;
+}
+
+.card {
+    background: var(--light-color);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    box-shadow: var(--box-shadow);
+}
+
+.card h3 {
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    font-size: 1.3rem;
+}
+
+/* Attendance Card */
+.attendance-card {
+    background: linear-gradient(135deg, #4cc9f0, #4361ee);
+    color: white;
+}
+
+.attendance-status {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.time-display {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.attendance-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.attendance-actions .btn {
+    flex: 1;
+}
+
+/* Tasks Card */
+.task-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.task-form input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+}
+
+.task-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.task-item {
+    background: white;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    margin-bottom: 10px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.task-item.completed {
+    border-left-color: var(--success-color);
+}
+
+.task-item.in-progress {
+    border-left-color: var(--warning-color);
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.task-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.task-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--light-color);
+}
+
+.task-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--gray-color);
+}
+
+.status-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Admin Dashboard */
+.admin-container {
+    padding: 20px 0;
+}
+
+.filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-group select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+.stat-card h3 {
+    margin-bottom: 15px;
+    color: var(--primary-color);
+}
+
+.chart-container {
+    height: 300px;
+    position: relative;
+}
+
+.export-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+.export-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* Tables */
+.table-container {
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: var(--box-shadow);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+thead {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Alerts */
+.alert {
+    padding: 15px;
+    border-radius: var(--border-radius);
+    margin: 20px 0;
+    display: none;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Loading Spinner */
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .cards {
+        grid-template-columns: 1fr;
     }
     
-    return ContentService
-      .createTextOutput(JSON.stringify(result))
-      .setMimeType(ContentService.MimeType.JSON);
-      
-  } catch (error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ 
-        success: false, 
-        message: error.toString() 
-      }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-// Initialize sheets
-function initSheets() {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  
-  // Create sheets if they don't exist
-  const sheets = ['Users', 'Attendance', 'Tasks'];
-  sheets.forEach(sheetName => {
-    let sheet = ss.getSheetByName(sheetName);
-    if (!sheet) {
-      sheet = ss.insertSheet(sheetName);
-      
-      // Set headers based on sheet type
-      if (sheetName === 'Users') {
-        sheet.getRange('A1:D1').setValues([['UserID', 'Name', 'Password', 'Role']]);
-        // Add sample users
-        sheet.getRange('A2:D4').setValues([
-          ['EMP001', 'John Doe', 'password123', 'employee'],
-          ['EMP002', 'Jane Smith', 'password123', 'employee'],
-          ['ADM001', 'Admin User', 'admin123', 'admin']
-        ]);
-      } else if (sheetName === 'Attendance') {
-        sheet.getRange('A1:E1').setValues([['UserID', 'Name', 'Date', 'CheckIn', 'CheckOut']]);
-      } else if (sheetName === 'Tasks') {
-        sheet.getRange('A1:F1').setValues([['TaskID', 'UserID', 'Name', 'TaskTitle', 'Status', 'LastUpdated']]);
-      }
+    .header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
     }
-  });
-  
-  return ss;
-}
-
-function handleLogin(userId) {
-  const ss = initSheets();
-  const usersSheet = ss.getSheetByName('Users');
-  const data = usersSheet.getDataRange().getValues();
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === userId) {
-      return {
-        success: true,
-        user: {
-          userId: data[i][0],
-          name: data[i][1],
-          role: data[i][3]
-        }
-      };
-    }
-  }
-  
-  return { success: false, message: 'User not found' };
-}
-
-function handleCheckIn(userId, name) {
-  const ss = initSheets();
-  const attendanceSheet = ss.getSheetByName('Attendance');
-  const data = attendanceSheet.getDataRange().getValues();
-  const today = new Date().toISOString().split('T')[0];
-  const now = new Date().toISOString();
-  
-  // Check if already checked in today
-  for (let i = 1; i < data.length; i++) {
-    const recordDate = new Date(data[i][2]).toISOString().split('T')[0];
-    if (data[i][0] === userId && recordDate === today && data[i][3]) {
-      return { 
-        success: false, 
-        message: 'Already checked in today' 
-      };
-    }
-  }
-  
-  // Add new attendance record
-  const newRow = [
-    userId,
-    name,
-    today,
-    now,
-    '' // CheckOut empty
-  ];
-  
-  attendanceSheet.appendRow(newRow);
-  
-  return { 
-    success: true, 
-    message: 'Checked in successfully',
-    time: now 
-  };
-}
-
-function handleCheckOut(userId) {
-  const ss = initSheets();
-  const attendanceSheet = ss.getSheetByName('Attendance');
-  const data = attendanceSheet.getDataRange().getValues();
-  const today = new Date().toISOString().split('T')[0];
-  const now = new Date().toISOString();
-  
-  // Find today's check-in
-  for (let i = 1; i < data.length; i++) {
-    const recordDate = new Date(data[i][2]).toISOString().split('T')[0];
-    if (data[i][0] === userId && recordDate === today) {
-      if (data[i][4]) {
-        return { 
-          success: false, 
-          message: 'Already checked out today' 
-        };
-      }
-      
-      // Update checkout time
-      attendanceSheet.getRange(i + 1, 5).setValue(now);
-      
-      return { 
-        success: true, 
-        message: 'Checked out successfully',
-        time: now 
-      };
-    }
-  }
-  
-  return { 
-    success: false, 
-    message: 'No check-in found for today' 
-  };
-}
-
-function getEmployeeAttendance(userId, period = 'daily') {
-  const ss = initSheets();
-  const attendanceSheet = ss.getSheetByName('Attendance');
-  const data = attendanceSheet.getDataRange().getValues();
-  const now = new Date();
-  const result = [];
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === userId) {
-      const recordDate = new Date(data[i][2]);
-      
-      // Filter by period
-      if (period === 'daily' && 
-          recordDate.toDateString() !== now.toDateString()) continue;
-      if (period === 'weekly') {
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - now.getDay());
-        if (recordDate < weekStart) continue;
-      }
-      if (period === 'monthly' && 
-          recordDate.getMonth() !== now.getMonth()) continue;
-      
-      result.push({
-        userId: data[i][0],
-        name: data[i][1],
-        date: data[i][2],
-        checkIn: data[i][3],
-        checkOut: data[i][4]
-      });
-    }
-  }
-  
-  return { success: true, data: result };
-}
-
-function getAllAttendance(period = 'daily') {
-  const ss = initSheets();
-  const attendanceSheet = ss.getSheetByName('Attendance');
-  const data = attendanceSheet.getDataRange().getValues();
-  const now = new Date();
-  const result = [];
-  
-  for (let i = 1; i < data.length; i++) {
-    const recordDate = new Date(data[i][2]);
     
-    // Filter by period
-    if (period === 'daily' && 
-        recordDate.toDateString() !== now.toDateString()) continue;
-    if (period === 'weekly') {
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - now.getDay());
-      if (recordDate < weekStart) continue;
+    .user-info {
+        flex-direction: column;
+        gap: 10px;
     }
-    if (period === 'monthly' && 
-        recordDate.getMonth() !== now.getMonth()) continue;
     
-    result.push({
-      userId: data[i][0],
-      name: data[i][1],
-      date: data[i][2],
-      checkIn: data[i][3],
-      checkOut: data[i][4]
-    });
-  }
-  
-  return { success: true, data: result };
-}
-
-function addTask(userId, name, taskTitle, status) {
-  const ss = initSheets();
-  const tasksSheet = ss.getSheetByName('Tasks');
-  const taskId = 'TASK' + Date.now();
-  const now = new Date().toISOString();
-  
-  const newRow = [
-    taskId,
-    userId,
-    name,
-    taskTitle,
-    status || 'Not Started',
-    now
-  ];
-  
-  tasksSheet.appendRow(newRow);
-  
-  return { 
-    success: true, 
-    message: 'Task added successfully',
-    taskId: taskId,
-    time: now 
-  };
-}
-
-function updateTask(taskId, status) {
-  const ss = initSheets();
-  const tasksSheet = ss.getSheetByName('Tasks');
-  const data = tasksSheet.getDataRange().getValues();
-  const now = new Date().toISOString();
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === taskId) {
-      tasksSheet.getRange(i + 1, 5).setValue(status);
-      tasksSheet.getRange(i + 1, 6).setValue(now);
-      
-      return { 
-        success: true, 
-        message: 'Task updated successfully',
-        time: now 
-      };
+    .attendance-actions {
+        flex-direction: column;
     }
-  }
-  
-  return { success: false, message: 'Task not found' };
-}
-
-function getEmployeeTasks(userId) {
-  const ss = initSheets();
-  const tasksSheet = ss.getSheetByName('Tasks');
-  const data = tasksSheet.getDataRange().getValues();
-  const result = [];
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][1] === userId) {
-      result.push({
-        taskId: data[i][0],
-        userId: data[i][1],
-        name: data[i][2],
-        taskTitle: data[i][3],
-        status: data[i][4],
-        lastUpdated: data[i][5]
-      });
+    
+    .task-form {
+        flex-direction: column;
     }
-  }
-  
-  return { success: true, data: result };
-}
-
-function getAllTasks() {
-  const ss = initSheets();
-  const tasksSheet = ss.getSheetByName('Tasks');
-  const data = tasksSheet.getDataRange().getValues();
-  const result = [];
-  
-  for (let i = 1; i < data.length; i++) {
-    result.push({
-      taskId: data[i][0],
-      userId: data[i][1],
-      name: data[i][2],
-      taskTitle: data[i][3],
-      status: data[i][4],
-      lastUpdated: data[i][5]
-    });
-  }
-  
-  return { success: true, data: result };
-}
-
-function exportData(dataType) {
-  const ss = initSheets();
-  let sheet;
-  let filename;
-  
-  if (dataType === 'attendance') {
-    sheet = ss.getSheetByName('Attendance');
-    filename = 'attendance_export_' + new Date().toISOString().split('T')[0] + '.csv';
-  } else if (dataType === 'tasks') {
-    sheet = ss.getSheetByName('Tasks');
-    filename = 'tasks_export_' + new Date().toISOString().split('T')[0] + '.csv';
-  } else {
-    return { success: false, message: 'Invalid data type' };
-  }
-  
-  const data = sheet.getDataRange().getValues();
-  const csv = data.map(row => row.join(',')).join('\n');
-  
-  return {
-    success: true,
-    filename: filename,
-    csv: csv
-  };
+    
+    .filters {
+        flex-direction: column;
+    }
+    
+    .export-buttons {
+        flex-direction: column;
+    }
+    
+    .login-box {
+        padding: 30px 20px;
+        margin: 0 20px;
+    }
 }
